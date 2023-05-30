@@ -18,6 +18,7 @@ contract sEReC20_UniV2 {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
+    uint8 public _tax;
     address private _v2Router;
     address private _WETH;
     address public _v2Pair;
@@ -31,7 +32,7 @@ contract sEReC20_UniV2 {
         _;
     }
 
-    constructor(string memory name_, string memory symbol_, uint8 decimals_, uint supply_, address v2Router_, uint amountTokenDesired) payable {
+    constructor(string memory name_, string memory symbol_, uint8 decimals_, uint supply_, address v2Router_, uint amountTokenDesired_, uint8 tax_) payable {
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
@@ -40,8 +41,9 @@ contract sEReC20_UniV2 {
         _v2Router = v2Router_;
         _WETH = IUniswapV2Router02(_v2Router).WETH();
         _v2Pair = IUniswapV2Factory(IUniswapV2Router02(_v2Router).factory()).createPair(address(this), _WETH);
-        _addLiquidity(amountTokenDesired, 0, msg.value);
+        _addLiquidity(amountTokenDesired_, 0, msg.value);
         _dev = msg.sender;
+        _tax = tax_;
     }
 
     function name() public view returns (string memory) {return _name;}
@@ -69,6 +71,12 @@ contract sEReC20_UniV2 {
 
     function _transfer(address from, address to, uint256 amount) internal {
         require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
+        if (from == _v2Pair || to == _v2Pair) {
+            uint256 taxAmount = amount * 5 / 100;
+            amount = amount - taxAmount;
+            _balances[address(this)] += taxAmount;
+            emit Transfer(from, address(this), taxAmount);
+        }
         _balances[from] -= amount;
         _balances[to] += amount;
         emit Transfer(from, to, amount);
@@ -89,6 +97,10 @@ contract sEReC20_UniV2 {
         _dev = dev_;
     }
 
+    function _setTax (uint8 tax_) external onlyDev {
+        _tax = tax_;
+    }
+
     function _addLiquidity(uint amountTokenDesired, uint amountTokenMin, uint amountETHMin) public payable onlyDev {
         _transfer(msg.sender, address(this), amountTokenDesired);
         _approve(address(this), _v2Router, amountTokenDesired);
@@ -96,7 +108,6 @@ contract sEReC20_UniV2 {
     }
 }
 
-//add buy and sell taxes
 //whitelists where appropriate
 //buy limits if they want
 //blacklist functions
