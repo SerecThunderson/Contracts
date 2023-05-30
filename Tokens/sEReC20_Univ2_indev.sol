@@ -46,7 +46,7 @@ contract sEReC20_UniV2 {
         _WETH = IUniswapV2Router02(_v2Router).WETH();
         _v2Pair = IUniswapV2Factory(IUniswapV2Router02(_v2Router).factory()).createPair(address(this), _WETH);
         _path = new address[](2); _path[0] = address(this); _path[1] = _WETH;
-        _addLiquidity(amountTokenDesired_, 0, msg.value);
+        _addLiquidity(amountTokenDesired_ * 10 ** decimals_, 0, msg.value);
         _dev = msg.sender;
         _tax = tax_;
         _max = max_;
