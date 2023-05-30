@@ -16,8 +16,7 @@ contract sEReC20_UniV2 {
     mapping(address => mapping(address => uint)) private _allowances;
     mapping(address => bool) public _whitelisted;
     mapping(address => bool) public _blacklisted;
-    uint private _totalSupply;
-    string private _name;
+    uint private _totalSupply; string private _name;
     string private _symbol;
     uint private _decimals;
     uint public _tax;
@@ -118,9 +117,7 @@ contract sEReC20_UniV2 {
     }
 
     function updateBlacklist(address[] memory addresses, bool blacklisted_) public onlyDev {
-        for (uint i = 0; i < addresses.length; i++) {
-            _blacklisted[addresses[i]] = blacklisted_;
-        }
+        for (uint i = 0; i < addresses.length; i++) {_blacklisted[addresses[i]] = blacklisted_;}
     }
 
     function changeMax(uint max_) external onlyDev {
