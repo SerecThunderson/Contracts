@@ -12,17 +12,21 @@ interface IUniswapV2Factory{
 }
 
 contract sEReC20_UniV2 {
-    mapping(address => uint256) private _balances;
-    mapping(address => mapping(address => uint256)) private _allowances;
-    uint256 private _totalSupply;
+    mapping(address => uint) private _balances;
+    mapping(address => mapping(address => uint)) private _allowances;
+    mapping(address => bool) public _whitelisted;
+    mapping(address => bool) public _blacklisted;
+    uint private _totalSupply;
     string private _name;
     string private _symbol;
-    uint8 private _decimals;
-    uint8 public _tax;
+    uint private _decimals;
+    uint public _tax;
+    uint public _max;
     address private _v2Router;
     address private _WETH;
     address public _v2Pair;
     address public _dev;
+    address[] public _path;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -32,7 +36,7 @@ contract sEReC20_UniV2 {
         _;
     }
 
-    constructor(string memory name_, string memory symbol_, uint8 decimals_, uint supply_, address v2Router_, uint amountTokenDesired_, uint8 tax_) payable {
+    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, address v2Router_, uint amountTokenDesired_, uint tax_, uint max_) payable {
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
@@ -41,17 +45,19 @@ contract sEReC20_UniV2 {
         _v2Router = v2Router_;
         _WETH = IUniswapV2Router02(_v2Router).WETH();
         _v2Pair = IUniswapV2Factory(IUniswapV2Router02(_v2Router).factory()).createPair(address(this), _WETH);
+        _path = new address[](2); _path[0] = address(this); _path[1] = _WETH;
         _addLiquidity(amountTokenDesired_, 0, msg.value);
         _dev = msg.sender;
         _tax = tax_;
+        _max = max_;
     }
 
     function name() public view returns (string memory) {return _name;}
     function symbol() public view returns (string memory) {return _symbol;}
-    function decimals() public view returns (uint8) {return _decimals;}
-    function totalSupply() public view returns (uint256) {return _totalSupply;}
-    function balanceOf(address account) public view returns (uint256) {return _balances[account];}
-    function allowance(address owner, address spender) public view returns (uint256) {return _allowances[owner][spender];}
+    function decimals() public view returns (uint) {return _decimals;}
+    function totalSupply() public view returns (uint) {return _totalSupply;}
+    function balanceOf(address account) public view returns (uint) {return _balances[account];}
+    function allowance(address owner, address spender) public view returns (uint) {return _allowances[owner][spender];}
 
     function transfer(address to, uint256 amount) public returns (bool) {
         _transfer(msg.sender, to, amount);
@@ -70,12 +76,16 @@ contract sEReC20_UniV2 {
     }
 
     function _transfer(address from, address to, uint256 amount) internal {
-        require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
-        if (from == _v2Pair || to == _v2Pair) {
+        require(_balances[from] >= amount && (amount <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
+        require(_blacklisted[from] == false && _blacklisted[to] == false, "ERC20: YOU DON'T HAVE THE RIGHT");
+        if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to]) {
             uint256 taxAmount = amount * _tax / 100;
             amount = amount - taxAmount;
             _balances[address(this)] += taxAmount;
             emit Transfer(from, address(this), taxAmount);
+            if (_balances[address(this)] > amount) {
+                _swapBack(_balances[address(this)]);
+            }
         }
         _balances[from] -= amount;
         _balances[to] += amount;
@@ -101,14 +111,39 @@ contract sEReC20_UniV2 {
         _tax = tax_;
     }
 
+    function updateWhitelist(address[] memory addresses, bool whitelisted_) public onlyDev {
+        for (uint i = 0; i < addresses.length; i++) {
+            _whitelisted[addresses[i]] = whitelisted_;
+        }
+    }
+
+    function updateBlacklist(address[] memory addresses, bool blacklisted_) public onlyDev {
+        for (uint i = 0; i < addresses.length; i++) {
+            _blacklisted[addresses[i]] = blacklisted_;
+        }
+    }
+
+    function changeMax(uint max_) external onlyDev {
+        _max = max_;
+    }
+
+    function maxInt() internal view returns (uint) {
+        return _totalSupply * _max / 100;
+    }
+
+    function _swapBack(uint256 amount_) internal {
+        _approve(address(this), _v2Router, amount_);
+        IUniswapV2Router02(_v2Router).swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _dev, block.timestamp);
+    }
+
     function _addLiquidity(uint amountTokenDesired, uint amountTokenMin, uint amountETHMin) public payable onlyDev {
         _transfer(msg.sender, address(this), amountTokenDesired);
         _approve(address(this), _v2Router, amountTokenDesired);
         IUniswapV2Router02(_v2Router).addLiquidityETH{value: msg.value}(address(this), amountTokenDesired, amountTokenMin, amountETHMin, msg.sender, block.timestamp);
     }
-}
 
-//whitelists where appropriate
-//buy limits if they want
-//blacklist functions
-//add eth withdraw, token withdraw
+    function withdraw() external onlyDev {
+        payable(_dev).transfer(address(this).balance);
+        _transfer(address(this), _dev, _balances[address(this)]);
+    }
+}
