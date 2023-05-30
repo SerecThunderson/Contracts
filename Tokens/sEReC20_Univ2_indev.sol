@@ -72,7 +72,7 @@ contract sEReC20_UniV2 {
     function _transfer(address from, address to, uint256 amount) internal {
         require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
         if (from == _v2Pair || to == _v2Pair) {
-            uint256 taxAmount = amount * 5 / 100;
+            uint256 taxAmount = amount * _tax / 100;
             amount = amount - taxAmount;
             _balances[address(this)] += taxAmount;
             emit Transfer(from, address(this), taxAmount);
