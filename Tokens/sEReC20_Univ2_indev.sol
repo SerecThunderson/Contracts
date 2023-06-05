@@ -23,7 +23,6 @@ contract sEReC20_UniV2 {
     uint public _tax;
     uint public _max;
     address private _v2Router;
-    address private _WETH;
     address public _v2Pair;
     address public _dev;
     address[] public _path;
@@ -49,7 +48,7 @@ contract sEReC20_UniV2 {
         _v2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
         uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
-        _path = new address[](2); _path[0] = address(this); _path[1] = _WETH;
+        _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
     }
 
     function name() external view returns (string memory) {return _name;}
@@ -76,9 +75,9 @@ contract sEReC20_UniV2 {
     }
 
     function _transfer(address from, address to, uint256 amount) internal {
-        require(_balances[from] >= amount && (amount <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
+        require(_balances[from] >= amount && (amount + _balances[to] <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
         require(_blacklisted[from] == false && _blacklisted[to] == false, "ERC20: YOU DON'T HAVE THE RIGHT");
-        if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to] && tx.origin != _dev) {
+        if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to] && tx.origin != _dev && from != address(this)) {
             uint256 taxAmount = amount * _tax / 100;
             amount -= taxAmount;
             _balances[address(this)] += taxAmount;
@@ -129,14 +128,14 @@ contract sEReC20_UniV2 {
         return _totalSupply * _max / 100;
     }
 
-    function _swapBack(uint256 amount_) internal {
-        _approve(address(this), _v2Router, amount_);
+    function _swapBack(uint256 amount_) public {
+        _approve(address(this), _v2Router, amount_ + 100);
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _dev, block.timestamp);
     }
 
-    function _addLiquidity(uint amountTokenDesired, uint amountEthDesired) public payable{
-        _approve(address(this), _v2Router, amountTokenDesired);
-        uniswapV2Router.addLiquidityETH{value: amountEthDesired}(address(this), amountTokenDesired, 0, 0, msg.sender, block.timestamp);
+    function _addLiquidity() external{
+        _approve(address(this), _v2Router, _balances[address(this)]);
+        uniswapV2Router.addLiquidityETH{value: address(this).balance}(address(this), _balances[address(this)], 0, 0, msg.sender, block.timestamp);
     }
 
     function withdraw() external onlyDev {
@@ -148,3 +147,4 @@ contract sEReC20_UniV2 {
 //todo
 //correct eth amounts/structure
 //script for deploy
+//swapback is broken -- _transferfrom failure
