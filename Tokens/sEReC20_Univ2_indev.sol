@@ -12,6 +12,7 @@ interface IUniswapV2Factory{
 }
 
 contract sEReC20_UniV2 {
+    IUniswapV2Router02 public immutable uniswapV2Router;
     mapping(address => uint) private _balances;
     mapping(address => mapping(address => uint)) private _allowances;
     mapping(address => bool) public _whitelisted;
@@ -35,28 +36,28 @@ contract sEReC20_UniV2 {
         _;
     }
 
-    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, address v2Router_, uint amountTokenDesired_, uint tax_, uint max_) payable {
+    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, uint tax_, uint max_) payable {
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
-        _balances[msg.sender] = supply_ * 10 ** decimals_;
-        _totalSupply = supply_ * 10 ** decimals_;
-        _v2Router = v2Router_;
-        _WETH = IUniswapV2Router02(_v2Router).WETH();
-        _v2Pair = IUniswapV2Factory(IUniswapV2Router02(_v2Router).factory()).createPair(address(this), _WETH);
-        _path = new address[](2); _path[0] = address(this); _path[1] = _WETH;
-        _addLiquidity(amountTokenDesired_ * 10 ** decimals_, 0, msg.value);
         _dev = msg.sender;
         _tax = tax_;
         _max = max_;
+        _balances[address(this)] = supply_ * 10 ** decimals_;
+        emit Transfer(address(0), address(this), supply_ * 10 ** decimals_);
+        _totalSupply = supply_ * 10 ** decimals_;
+        _v2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+        uniswapV2Router = IUniswapV2Router02(_v2Router);
+        _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
+        _path = new address[](2); _path[0] = address(this); _path[1] = _WETH;
     }
 
-    function name() public view returns (string memory) {return _name;}
-    function symbol() public view returns (string memory) {return _symbol;}
-    function decimals() public view returns (uint) {return _decimals;}
-    function totalSupply() public view returns (uint) {return _totalSupply;}
-    function balanceOf(address account) public view returns (uint) {return _balances[account];}
-    function allowance(address owner, address spender) public view returns (uint) {return _allowances[owner][spender];}
+    function name() external view returns (string memory) {return _name;}
+    function symbol() external view returns (string memory) {return _symbol;}
+    function decimals() external view returns (uint) {return _decimals;}
+    function totalSupply() external view returns (uint) {return _totalSupply;}
+    function balanceOf(address account) external view returns (uint) {return _balances[account];}
+    function allowance(address owner, address spender) external view returns (uint) {return _allowances[owner][spender];}
 
     function transfer(address to, uint256 amount) public returns (bool) {
         _transfer(msg.sender, to, amount);
@@ -77,9 +78,9 @@ contract sEReC20_UniV2 {
     function _transfer(address from, address to, uint256 amount) internal {
         require(_balances[from] >= amount && (amount <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
         require(_blacklisted[from] == false && _blacklisted[to] == false, "ERC20: YOU DON'T HAVE THE RIGHT");
-        if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to]) {
+        if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to] && tx.origin != _dev) {
             uint256 taxAmount = amount * _tax / 100;
-            amount = amount - taxAmount;
+            amount -= taxAmount;
             _balances[address(this)] += taxAmount;
             emit Transfer(from, address(this), taxAmount);
             if (_balances[address(this)] > amount) {
@@ -97,7 +98,7 @@ contract sEReC20_UniV2 {
     }
 
     function _spendAllowance(address owner, address spender, uint256 amount) internal {
-        uint256 currentAllowance = allowance(owner, spender);
+        uint256 currentAllowance = _allowances[owner][spender];
         require(currentAllowance >= amount, "ERC20: insufficient allowance");
         _approve(owner, spender, currentAllowance - amount);
     }
@@ -130,13 +131,12 @@ contract sEReC20_UniV2 {
 
     function _swapBack(uint256 amount_) internal {
         _approve(address(this), _v2Router, amount_);
-        IUniswapV2Router02(_v2Router).swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _dev, block.timestamp);
+        uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _dev, block.timestamp);
     }
 
-    function _addLiquidity(uint amountTokenDesired, uint amountTokenMin, uint amountETHMin) public payable onlyDev {
-        _transfer(msg.sender, address(this), amountTokenDesired);
+    function _addLiquidity(uint amountTokenDesired, uint amountEthDesired) public payable{
         _approve(address(this), _v2Router, amountTokenDesired);
-        IUniswapV2Router02(_v2Router).addLiquidityETH{value: msg.value}(address(this), amountTokenDesired, amountTokenMin, amountETHMin, msg.sender, block.timestamp);
+        uniswapV2Router.addLiquidityETH{value: amountEthDesired}(address(this), amountTokenDesired, 0, 0, msg.sender, block.timestamp);
     }
 
     function withdraw() external onlyDev {
@@ -144,3 +144,7 @@ contract sEReC20_UniV2 {
         _transfer(address(this), _dev, _balances[address(this)]);
     }
 }
+
+//todo
+//correct eth amounts/structure
+//script for deploy
