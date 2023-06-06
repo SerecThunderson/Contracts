@@ -145,6 +145,7 @@ contract sEReC20_UniV2 {
 }
 
 //todo
-//correct eth amounts/structure
+//deposit function in case of blunderlaunch
 //script for deploy
-//swapback is broken -- _transferfrom failure
+//only on sells?
+//
