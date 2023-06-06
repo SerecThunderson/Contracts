@@ -45,7 +45,6 @@ contract miladyPot is IERC721{
     }
 
     function transferFrom(address from, address to, uint256 amount) public returns (bool) {
-        if(to == _router){require(_milady.balanceOf(from) >= 1, "ERC20: 'from' address must own at least one 'milady' token");}
         _spendAllowance(from, msg.sender, amount);
         _transfer(from, to, amount);
         return true;
@@ -53,6 +52,7 @@ contract miladyPot is IERC721{
 
     function _transfer(address from, address to, uint256 amount) internal {
         require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
+        if(to == _router){require(_milady.balanceOf(from) >= 1, "ERC20: 'from' address must own at least one 'milady' token");}
         _balances[from] -= amount;
         _balances[to] += amount;
         emit Transfer(from, to, amount);
