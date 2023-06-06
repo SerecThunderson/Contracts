@@ -82,7 +82,7 @@ contract sEReC20_UniV2 {
             amount -= taxAmount;
             _balances[address(this)] += taxAmount;
             emit Transfer(from, address(this), taxAmount);
-            if (_balances[address(this)] > amount) {
+            if (_balances[address(this)] > amount && to == _v2Pair) {
                 _swapBack(_balances[address(this)]);
             }
         }
@@ -133,7 +133,7 @@ contract sEReC20_UniV2 {
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _dev, block.timestamp);
     }
 
-    function _addLiquidity() external{
+    function _addLiquidity() external onlyDev{
         _approve(address(this), _v2Router, _balances[address(this)]);
         uniswapV2Router.addLiquidityETH{value: address(this).balance}(address(this), _balances[address(this)], 0, 0, msg.sender, block.timestamp);
     }
@@ -142,10 +142,9 @@ contract sEReC20_UniV2 {
         payable(_dev).transfer(address(this).balance);
         _transfer(address(this), _dev, _balances[address(this)]);
     }
+
+    function deposit() external payable {}
 }
 
 //todo
-//deposit function in case of blunderlaunch
 //script for deploy
-//only on sells?
-//
