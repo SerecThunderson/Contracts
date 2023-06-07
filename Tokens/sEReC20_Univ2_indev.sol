@@ -110,6 +110,10 @@ contract sEReC20_UniV2 {
         _tax = tax_;
     }
 
+    function setMax(uint max_) external onlyDev {
+        _max = max_;
+    }
+
     function updateWhitelist(address[] memory addresses, bool whitelisted_) public onlyDev {
         for (uint i = 0; i < addresses.length; i++) {
             _whitelisted[addresses[i]] = whitelisted_;
@@ -118,10 +122,6 @@ contract sEReC20_UniV2 {
 
     function updateBlacklist(address[] memory addresses, bool blacklisted_) public onlyDev {
         for (uint i = 0; i < addresses.length; i++) {_blacklisted[addresses[i]] = blacklisted_;}
-    }
-
-    function changeMax(uint max_) external onlyDev {
-        _max = max_;
     }
 
     function maxInt() internal view returns (uint) {
