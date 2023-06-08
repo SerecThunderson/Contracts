@@ -1,0 +1,89 @@
+pragma solidity 0.8.18;
+contract presaleTracker {
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
+    uint256 private _totalSupply;
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
+    uint public _totalEth;
+    uint public _maxPurchase;
+    uint public _tokensPerEth;
+    address public _dev;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    modifier onlyDev() {
+        require(msg.sender == _dev, "Only the developer can call this function");
+        _;
+    }
+
+    constructor(string memory name_, string memory symbol_, uint totalEth_, uint maxPurchase_, uint tokensPerEth_) {
+        _name = name_;
+        _symbol = symbol_;
+        _decimals = 18;
+        _totalSupply = 0 * 10 ** _decimals;
+        _totalEth = totalEth_;
+        _maxPurchase = maxPurchase_;
+        _tokensPerEth = tokensPerEth_;
+        _dev = msg.sender;
+    }
+
+    function name() public view returns (string memory) {return _name;}
+    function symbol() public view returns (string memory) {return _symbol;}
+    function decimals() public view returns (uint8) {return _decimals;}
+    function totalSupply() public view returns (uint256) {return _totalSupply;}
+    function balanceOf(address account) public view returns (uint256) {return _balances[account];}
+    function allowance(address owner, address spender) public view returns (uint256) {return _allowances[owner][spender];}
+
+    function buyTokens(address to) public payable {
+        uint256 etherAmount = msg.value;
+        uint256 tokensToBuy = etherAmount * _tokensPerEth / 1 ether;
+
+        require(etherAmount >= 1 wei, "Must send at least one wei");
+        require(etherAmount <= _maxPurchase, "Cannot purchase more than the maximum allowed");
+        require(_totalSupply + tokensToBuy <= _totalEth * _tokensPerEth / 1 ether, "Purchase would exceed total supply");
+
+        _balances[to] += tokensToBuy;
+        emit Transfer(address(0), to, tokensToBuy);
+    }
+
+    receive() external payable {
+        buyTokens(msg.sender);
+    }
+
+    function transfer(address to, uint256 amount) public onlyDev returns (bool) {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function approve(address spender, uint256 amount) public returns (bool) {
+        _approve(msg.sender, spender, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public onlyDev returns (bool) {
+        _spendAllowance(from, msg.sender, amount);
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal {
+        require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
+        _balances[from] -= amount;
+        _balances[to] += amount;
+        emit Transfer(from, to, amount);
+    }
+
+    function _approve(address owner, address spender, uint256 amount) internal {
+        _allowances[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
+    }
+
+    function _spendAllowance(address owner, address spender, uint256 amount) internal {
+        uint256 currentAllowance = allowance(owner, spender);
+        require(currentAllowance >= amount, "ERC20: insufficient allowance");
+        _approve(owner, spender, currentAllowance - amount);
+    }
+}
