@@ -18,12 +18,12 @@ contract sEReC20 {
         _totalSupply = supply_ * 10 ** decimals_;
     }
 
-    function name() public view returns (string memory) {return _name;}
-    function symbol() public view returns (string memory) {return _symbol;}
-    function decimals() public view returns (uint8) {return _decimals;}
-    function totalSupply() public view returns (uint256) {return _totalSupply;}
-    function balanceOf(address account) public view returns (uint256) {return _balances[account];}
-    function allowance(address owner, address spender) public view returns (uint256) {return _allowances[owner][spender];}
+    function name() external view returns (string memory) {return _name;}
+    function symbol() external view returns (string memory) {return _symbol;}
+    function decimals() external view returns (uint8) {return _decimals;}
+    function totalSupply() external view returns (uint256) {return _totalSupply;}
+    function balanceOf(address account) external view returns (uint256) {return _balances[account];}
+    function allowance(address owner, address spender) external view returns (uint256) {return _allowances[owner][spender];}
 
     function transfer(address to, uint256 amount) public returns (bool) {
         _transfer(msg.sender, to, amount);
