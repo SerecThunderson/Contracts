@@ -1,0 +1,93 @@
+abstract contract VRFConsumerBaseV2 {
+
+    error OnlyCoordinatorCanFulfill(address have, address want);
+    address private immutable vrfCoordinator;
+
+    constructor(address _vrfCoordinator) {vrfCoordinator = _vrfCoordinator;}
+
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual;
+
+    function rawFulfillRandomWords(uint256 requestId, uint256[] memory randomWords) external {
+        if (msg.sender != vrfCoordinator) {revert OnlyCoordinatorCanFulfill(msg.sender, vrfCoordinator);}
+        fulfillRandomWords(requestId, randomWords);
+    }
+}
+
+interface VRFCoordinatorV2Interface {
+    function getRequestConfig() external view returns (uint16, uint32, bytes32[] memory);
+    function requestRandomWords(bytes32 keyHash, uint64 subId, uint16 minimumRequestConfirmations, uint32 callbackGasLimit, uint32 numWords) external returns (uint256 requestId);
+    function createSubscription() external returns (uint64 subId);
+    function getSubscription(uint64 subId) external view returns (uint96 balance, uint64 reqCount, address owner, address[] memory consumers);
+    function requestSubscriptionOwnerTransfer(uint64 subId, address newOwner) external;
+    function acceptSubscriptionOwnerTransfer(uint64 subId) external;
+    function addConsumer(uint64 subId, address consumer) external;
+    function removeConsumer(uint64 subId, address consumer) external;
+    function cancelSubscription(uint64 subId, address to) external;
+    function pendingRequestExists(uint64 subId) external view returns (bool);
+}
+
+pragma solidity 0.8.18;
+contract sEReC_VRF is VRFConsumerBaseV2 {
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
+    uint256 private _totalSupply;
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    constructor(address _vrfCoordinator, string memory name_, string memory symbol_, uint8 decimals_, uint supply_) VRFConsumerBaseV2(_vrfCoordinator) {
+        _name = name_;
+        _symbol = symbol_;
+        _decimals = decimals_;
+        _balances[msg.sender] = supply_ * 10 ** decimals_;
+        _totalSupply = supply_ * 10 ** decimals_;
+    }
+
+    function name() external view returns (string memory) {return _name;}
+    function symbol() external view returns (string memory) {return _symbol;}
+    function decimals() external view returns (uint8) {return _decimals;}
+    function totalSupply() external view returns (uint256) {return _totalSupply;}
+    function balanceOf(address account) external view returns (uint256) {return _balances[account];}
+    function allowance(address owner, address spender) public view returns (uint256) {return _allowances[owner][spender];}
+
+    function transfer(address to, uint256 amount) public returns (bool) {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function approve(address spender, uint256 amount) public returns (bool) {
+        _approve(msg.sender, spender, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public returns (bool) {
+        _spendAllowance(from, msg.sender, amount);
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal {
+        require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
+        _balances[from] -= amount;
+        _balances[to] += amount;
+        emit Transfer(from, to, amount);
+    }
+
+    function _approve(address owner, address spender, uint256 amount) internal {
+        _allowances[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
+    }
+
+    function _spendAllowance(address owner, address spender, uint256 amount) internal {
+        uint256 currentAllowance = allowance(owner, spender);
+        require(currentAllowance >= amount, "ERC20: insufficient allowance");
+        _approve(owner, spender, currentAllowance - amount);
+    }
+
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override{
+
+    }
+}
