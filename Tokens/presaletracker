@@ -34,7 +34,8 @@ contract presaleTracker {
     function balanceOf(address account) public view returns (uint256) {return _balances[account];}
 
     function buyTokens() public payable {
-        require(_balances[msg.sender] + msg.value <= _maxBuy && msg.value >= _minBuy, "You must purchase more than min, and less than max!");
+        require(msg.value >= _minBuy, "You must purchase more than min amount!");
+        require(_balances[msg.sender] + msg.value <= _maxBuy || _public, "You must purchase less than max amount!");
         require(_totalSupply + msg.value <= _ethCap, "Purchase would exceed total supply");
         require(_public || _whitelisted[msg.sender], "You are not whitelisted for the private sale!");
         _balances[msg.sender] += msg.value; _totalSupply += msg.value;
@@ -65,5 +66,9 @@ contract presaleTracker {
     function setLimits (uint ethCap_, uint maxBuy_) public onlyDev {
         _ethCap = ethCap_;
         _maxBuy = maxBuy_;
+    }
+
+    function changeDev (address dev_) public onlyDev {
+        _dev = dev_;
     }
 }
