@@ -1,5 +1,7 @@
 pragma solidity 0.8.18;
+
 contract presaleTracker {
+
     mapping(address => uint256) private _balances;
     mapping(address => bool) public _whitelisted;
     uint256 private _totalSupply;
@@ -71,4 +73,9 @@ contract presaleTracker {
     function changeDev (address dev_) public onlyDev {
         _dev = dev_;
     }
+
+    function changeWallet (address wallet_) public onlyDev {
+        _wallet = wallet_;
+    }
+    
 }
