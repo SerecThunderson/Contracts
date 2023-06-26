@@ -82,6 +82,7 @@ contract ERC20_UniV2 {
             }
         }
         _lastTransferBlock[from] = block.number;
+        _lastTransferBlock[to] = block.number;
         _balances[from] -= amount;
         _balances[to] += amount;
         emit Transfer(from, to, amount);
