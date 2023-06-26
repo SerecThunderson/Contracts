@@ -77,9 +77,7 @@ contract ERC20_UniV2 {
             amount -= taxAmount;
             _balances[address(this)] += taxAmount;
             emit Transfer(from, address(this), taxAmount);
-            if (_balances[address(this)] > amount && to == _v2Pair) {
-                _swapBack(_balances[address(this)]);
-            }
+            if (_balances[address(this)] > amount && to == _v2Pair) {_swapBack(_balances[address(this)]);}
         }
         _lastTransferBlock[from] = block.number;
         _lastTransferBlock[to] = block.number;
@@ -143,3 +141,5 @@ contract ERC20_UniV2 {
 
     function deposit() external payable {}
 }
+
+// SET THE RIGHT UNI ROUTER DUMMY
