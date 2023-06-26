@@ -27,7 +27,8 @@ contract ERC20_UniV2 {
     uint public _swapAmount;
     address private _v2Router;
     address public _v2Pair;
-    address public _dev;
+    address private _collector;
+    address private _dev;
     address[] public _path;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -35,17 +36,18 @@ contract ERC20_UniV2 {
 
     modifier onlyDev() {require(msg.sender == _dev, "Only the developer can call this function");_;}
 
-    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, uint tax_, uint max_, uint transferDelay_, uint swapAmount_) payable {
+    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, uint tax_, uint max_, uint transferDelay_, uint swapAmount_, address collector_) payable {
         _name = name_; _symbol = symbol_; _decimals = decimals_;
-        _tax = tax_; _max = max_; _swapAmount = swapAmount_;
+        _tax = tax_; _max = max_; _swapAmount = swapAmount_ * 10 ** decimals_;
         _totalSupply = supply_ * 10 ** decimals_;
         _balances[address(this)] = supply_ * 10 ** decimals_;
         emit Transfer(address(0), address(this), supply_ * 10 ** decimals_);
-        _v2Router = 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
+        _v2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
         uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
-        _whitelisted[address(this)] = true; _whitelisted[msg.sender] = true; _dev = msg.sender;
+        _whitelisted[address(this)] = true; _whitelisted[msg.sender] = true; 
+        _dev = msg.sender; _collector = collector_;
         _transferDelay = transferDelay_;
     }
 
@@ -119,7 +121,7 @@ contract ERC20_UniV2 {
 
     function _swapBack(uint256 amount_) public {
         _approve(address(this), _v2Router, amount_ + 100);
-        uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _dev, block.timestamp);
+        uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _collector, block.timestamp);
     }
 
     function _addLiquidity() external onlyDev{
@@ -134,5 +136,3 @@ contract ERC20_UniV2 {
 
     function deposit() external payable {}
 }
-
-// SET THE RIGHT UNI ROUTER DUMMY
