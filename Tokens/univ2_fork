@@ -71,13 +71,13 @@ contract ERC20_UniV2 {
     function _transfer(address from, address to, uint256 amount) internal {
         require(_balances[from] >= amount && (amount + _balances[to] <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
         require(_blacklisted[from] == false && _blacklisted[to] == false, "ERC20: YOU DON'T HAVE THE RIGHT");
-        require(block.number > _lastTransferBlock[from] + _transferDelay || from == _v2Pair, "ERC20: transfer delay not met");
+        require(block.number > _lastTransferBlock[from] + _transferDelay || from == _v2Pair || _whitelisted[from] || _whitelisted[to], "ERC20: transfer delay not met");
         if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to]) {
             uint256 taxAmount = amount * _tax / 100;
             amount -= taxAmount; _balances[address(this)] += taxAmount; emit Transfer(from, address(this), taxAmount);
+            _lastTransferBlock[from] = block.number; _lastTransferBlock[to] = block.number;
             if (_balances[address(this)] > _swapAmount && to == _v2Pair) {_swapBack(_balances[address(this)]);}
         }
-        _lastTransferBlock[from] = block.number; _lastTransferBlock[to] = block.number;
         _balances[from] -= amount; _balances[to] += amount; emit Transfer(from, to, amount);
     }
 
