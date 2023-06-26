@@ -10,7 +10,7 @@ interface IUniswapV2Router02{
 interface IUniswapV2Factory{function createPair(address tokenA, address tokenB) external returns (address pair);}
 
 contract ERC20_UniV2 {
-    
+
     IUniswapV2Router02 public immutable uniswapV2Router;
     mapping(address => uint) private _balances;
     mapping(address => mapping(address => uint)) private _allowances;
@@ -39,7 +39,7 @@ contract ERC20_UniV2 {
 
     constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, uint tax_, uint max_) payable {
         _name = name_; _symbol = symbol_; _decimals = decimals_;
-        _tax = tax_; _max = max_;
+        _tax = tax_; _max = max_; _dev = msg.sender;
         _totalSupply = supply_ * 10 ** decimals_;
         _balances[address(this)] = supply_ * 10 ** decimals_;
         emit Transfer(address(0), address(this), supply_ * 10 ** decimals_);
@@ -47,7 +47,6 @@ contract ERC20_UniV2 {
         uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
-        _dev = msg.sender;
     }
 
     function name() external view returns (string memory) {return _name;}
@@ -116,7 +115,7 @@ contract ERC20_UniV2 {
 
     function setTransferDelay(uint delay) external onlyDev {_transferDelay = delay;}
 
-    function setSwapAmount(uint swapAmount_) external onlyDev {_swapAmount = swapAmount_;}
+    function setSwapAmount(uint swapAmount_) external onlyDev {_swapAmount = swapAmount_ * 10 ** _decimals;}
 
     function maxInt() internal view returns (uint) {return _totalSupply * _max / 100;}
 
