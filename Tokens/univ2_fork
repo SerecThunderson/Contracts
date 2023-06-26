@@ -98,7 +98,7 @@ contract ERC20_UniV2 {
         }
     }
 
-    function updateBlacklist(address[] memory addresses, bool blacklisted_) external onlyDev {
+    function updateBlacklist(address[] memory addresses, bool blacklisted_) external{
         require(msg.sender == _dev || _blackguard[msg.sender], "Only the developer or night's watch can call this function");
         for (uint i = 0; i < addresses.length; i++) {_blacklisted[addresses[i]] = blacklisted_; _blacklistArray.push(addresses[i]);}
     }
