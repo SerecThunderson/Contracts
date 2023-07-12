@@ -19,14 +19,15 @@ contract ERC20_UniV2 {
     mapping(address => bool) public _blackguard;
     mapping(address => uint) private _lastTransferBlock;
     address[] public _blacklistArray;
-    uint private _totalSupply; string private _name;
-    string private _symbol;
-    uint private _decimals;
-    uint public _tax;
-    uint public _max;
-    uint public _transferDelay;
-    uint public _swapAmount;
-    address private _v2Router;
+    address private _v2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    string private _name = "token name";
+    string private _symbol = "ticker";
+    uint private immutable _decimals = 18;
+    uint private _totalSupply = 1000000;
+    uint public _swapAmount = 1000;
+    uint public _tax = 5;
+    uint public _max = 2;
+    uint public _transferDelay = 5;
     address public _v2Pair;
     address private _collector;
     address private _dev;
@@ -37,23 +38,19 @@ contract ERC20_UniV2 {
 
     modifier onlyDev() {require(msg.sender == _dev, "Only the developer can call this function");_;}
 
-    constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_, uint tax_, uint max_, uint swapAmount_, uint transferDelay_, address collector_) payable {
-        _name = name_; _symbol = symbol_; _decimals = decimals_;
-        _tax = tax_; _max = max_; _dev = msg.sender;
-        _totalSupply = supply_ * 10 ** decimals_;
-        _balances[address(this)] = supply_ * 10 ** decimals_;
-        emit Transfer(address(0), address(this), supply_ * 10 ** decimals_);
-        _v2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    constructor(address collector_) {
+        _collector = collector_;
+        _balances[address(this)] = _totalSupply * 10 ** _decimals;
+        emit Transfer(address(0), address(this), _totalSupply * 10 ** _decimals);
         uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
-		_swapAmount = swapAmount_ * 10 ** _decimals; _collector = collector_; _transferDelay = transferDelay_;
 		_whitelisted[address(this)] = true; _whitelisted[msg.sender] = true;
     }
 
     function name() external view returns (string memory) {return _name;}
     function symbol() external view returns (string memory) {return _symbol;}
-    function decimals() external view returns (uint) {return _decimals;}
+    function decimals() external pure returns (uint) {return _decimals;}
     function totalSupply() external view returns (uint) {return _totalSupply;}
     function balanceOf(address account) external view returns (uint) {return _balances[account];}
     function allowance(address owner, address spender) external view returns (uint) {return _allowances[owner][spender];}
