@@ -45,7 +45,7 @@ contract ERC20_UniV2 {
         uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
-		_whitelisted[address(this)] = true; _whitelisted[msg.sender] = true;
+	_whitelisted[address(this)] = true; _whitelisted[msg.sender] = true;
     }
 
     function name() external view returns (string memory) {return _name;}
