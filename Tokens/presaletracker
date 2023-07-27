@@ -4,7 +4,7 @@ contract presaleTracker {
 
     mapping(address => uint256) private _balances;
     mapping(address => bool) public _whitelisted;
-    uint256 private _totalSupply;
+    uint private _totalSupply;
     string private _name;
     string private _symbol;
     uint8 private _decimals;
@@ -12,7 +12,6 @@ contract presaleTracker {
     uint public _maxBuy;
     uint public _minBuy;
     address private _dev;
-    address private _wallet;
     bool public _public;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -21,11 +20,11 @@ contract presaleTracker {
         require(msg.sender == _dev, "Only the developer can call this function"); _;
     }
 
-    constructor(string memory name_, string memory symbol_, uint ethCap_, uint minBuy_, uint maxBuy_, address wallet_) {
+    constructor(string memory name_, string memory symbol_, uint ethCap_, uint minBuy_, uint maxBuy_) {
         _name = name_; _symbol = symbol_; _decimals = 18;
         _totalSupply = 0 * 10 ** _decimals;
         _ethCap = ethCap_; _minBuy = minBuy_; _maxBuy = maxBuy_;
-        _dev = msg.sender; _wallet = wallet_;
+        _dev = msg.sender;
     }
 
     function name() public view returns (string memory) {return _name;}
@@ -39,7 +38,6 @@ contract presaleTracker {
         require(_balances[msg.sender] + msg.value <= _maxBuy || _public, "You must purchase less than max amount!");
         require(_totalSupply + msg.value <= _ethCap, "Purchase would exceed total supply");
         require(_public || _whitelisted[msg.sender], "You are not whitelisted for the private sale!");
-        payable(_wallet).transfer(msg.value);
         _balances[msg.sender] += msg.value; _totalSupply += msg.value;
         emit Transfer(address(0), msg.sender, msg.value);
     }
@@ -73,9 +71,4 @@ contract presaleTracker {
     function changeDev (address dev_) public onlyDev {
         _dev = dev_;
     }
-
-    function changeWallet (address wallet_) public onlyDev {
-        _wallet = wallet_;
-    }
-    
 }
