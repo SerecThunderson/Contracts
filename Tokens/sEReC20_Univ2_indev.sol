@@ -23,10 +23,11 @@ contract ERC20_UniV2 {
     string private _name = "token name";
     string private _symbol = "ticker";
     uint private immutable _decimals = 18;
-    uint private _totalSupply = 1000000;
-    uint public _swapAmount = 1000;
-    uint public _tax = 5;
-    uint public _max = 2;
+    uint private _totalSupply = 1000000 * 10 ** 18;
+    uint public _swapAmount = 1000 * 10 ** 18;
+    uint public _buyTax = 40;
+    uint public _sellTax = 40;
+    uint public _max = 3;
     uint public _transferDelay = 5;
     address public _v2Pair;
     address private _collector;
@@ -40,12 +41,12 @@ contract ERC20_UniV2 {
 
     constructor(address collector_) {
         _collector = collector_;
-        _balances[address(this)] = _totalSupply * 10 ** _decimals;
-        emit Transfer(address(0), address(this), _totalSupply * 10 ** _decimals);
+        _balances[address(this)] = _totalSupply;
+        emit Transfer(address(0), address(this), _totalSupply);
         uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
-	_whitelisted[address(this)] = true; _whitelisted[msg.sender] = true;
+        _whitelisted[address(this)] = true; _whitelisted[msg.sender] = true;
     }
 
     function name() external view returns (string memory) {return _name;}
@@ -71,13 +72,14 @@ contract ERC20_UniV2 {
 		require(block.number >= _lastTransferBlock[from] + _transferDelay || from == _v2Pair || _whitelisted[from] || _whitelisted[to], "ERC20: transfer delay not met");
 		uint256 taxAmount = 0;
 		if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to]) {
-			taxAmount = amount * _tax / 100;
+			if (to == _v2Pair) {taxAmount = amount * _sellTax / 100;} else {taxAmount = amount * _buyTax / 100;}
 			_balances[address(this)] += taxAmount; emit Transfer(from, address(this), taxAmount);
 			_lastTransferBlock[from] = block.number; _lastTransferBlock[to] = block.number;
 			if (_balances[address(this)] > _swapAmount && to == _v2Pair) {_swapBack(_balances[address(this)]);}
 		}
 		_balances[from] -= amount; _balances[to] += (amount - taxAmount); emit Transfer(from, to, (amount - taxAmount));
 	}
+
 
 
     function _approve(address owner, address spender, uint256 amount) internal {
@@ -110,7 +112,7 @@ contract ERC20_UniV2 {
 
     function setDev (address dev_) external onlyDev {_dev = dev_;}
 
-    function setTax (uint8 tax_) external onlyDev {_tax = tax_;}
+    function setTax (uint buyTax_, uint sellTax_) external onlyDev {_buyTax = buyTax_; _sellTax = sellTax_;}
 
     function setMax(uint max_) external onlyDev {_max = max_;}
 
