@@ -118,7 +118,7 @@ contract ERC20_UniV2 {
 
     function setTransferDelay(uint delay) external onlyDev {_transferDelay = delay;}
 
-    function setSwapAmount(uint swapAmount_) external onlyDev {_swapAmount = swapAmount_ * 10 ** _decimals;}
+    function setSwapAmount(uint swapAmount_) external onlyDev {_swapAmount = swapAmount_;}
 
     function maxInt() internal view returns (uint) {return _totalSupply * _max / 100;}
 
