@@ -20,8 +20,8 @@ contract ERC20_UniV2 {
     mapping(address => uint) private _lastTransferBlock;
     address[] public _blacklistArray;
     address private _v2Router = 0xfCD3842f85ed87ba2889b4D35893403796e67FF1;
-    string private _name = "token name";
-    string private _symbol = "TICKER";
+    string private _name = "TEST DO NOT BUY";
+    string private _symbol = "TEST";
     uint private immutable _decimals = 18;
     uint private _totalSupply = 1000000 * 10 ** 18;
     uint public _swapAmount = 1000 * 10 ** 18;
