@@ -137,11 +137,11 @@ contract ERC20_UniV2 {
         _transfer(address(this), _dev, amount_);
     }
 
-	function setRouter(address v2Router_) external onlyDev {
-		_v2Router = v2Router_;
-		uniswapV2Router = IUniswapV2Router02(_v2Router);
+    function setRouter(address v2Router_) external onlyDev {
+        _v2Router = v2Router_;
+        uniswapV2Router = IUniswapV2Router02(_v2Router);
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
-	}
+    }
 
     function deposit() external payable onlyDev{}
 }
