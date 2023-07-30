@@ -40,7 +40,7 @@ contract ERC20_UniV2 {
     modifier onlyDev() {require(msg.sender == _dev, "Only the developer can call this function");_;}
 
     constructor(address collector_) {
-        _collector = collector_;
+        _collector = collector_; _dev = msg.sender;
         _balances[address(this)] = _totalSupply;
         emit Transfer(address(0), address(this), _totalSupply);
         uniswapV2Router = IUniswapV2Router02(_v2Router);
@@ -143,5 +143,5 @@ contract ERC20_UniV2 {
         _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
 	}
 
-    function deposit() external payable {}
+    function deposit() external payable onlyDev{}
 }
