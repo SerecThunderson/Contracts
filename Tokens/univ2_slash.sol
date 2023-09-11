@@ -28,8 +28,8 @@ contract ERC20_UniV2 {
     address private _dev;
     address[] public _path;
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
 
     modifier onlyDev() {require(msg.sender == _dev, "Only the developer can call this function");_;}
 
@@ -53,20 +53,20 @@ contract ERC20_UniV2 {
     function setMax(uint max_) external onlyDev {_max = max_;}
     function setSwapAmount(uint swapAmount_) external onlyDev {_swapAmount = swapAmount_ * 10 ** _decimals;}
     function maxInt() internal view returns (uint) {return _totalSupply * _max / 100;}
-    function transfer(address to, uint256 amount) public returns (bool) {_transfer(msg.sender, to, amount); return true;}
-    function approve(address spender, uint256 amount) public returns (bool) {_approve(msg.sender, spender, amount); return true;}
+    function transfer(address to, uint amount) public returns (bool) {_transfer(msg.sender, to, amount); return true;}
+    function approve(address spender, uint amount) public returns (bool) {_approve(msg.sender, spender, amount); return true;}
     function withdraw(uint amount_) external onlyDev {payable(_dev).transfer(address(this).balance);_transfer(address(this), _dev, amount_);}
     function updateWhitelist(address[] memory addresses, bool whitelisted_) external onlyDev {for (uint i = 0; i < addresses.length; i++) {_whitelisted[addresses[i]] = whitelisted_;}}
 
-    function transferFrom(address from, address to, uint256 amount) public returns (bool) {
+    function transferFrom(address from, address to, uint amount) public returns (bool) {
         _spendAllowance(from, msg.sender, amount);
         _transfer(from, to, amount);
         return true;
     }
 
-	function _transfer(address from, address to, uint256 amount) internal {
+	function _transfer(address from, address to, uint amount) internal {
 		require(_balances[from] >= amount && (amount + _balances[to] <= maxInt() || _whitelisted[from] || _whitelisted[to] || to == _v2Pair), "ERC20: transfer amount exceeds balance or max wallet");
-		uint256 taxAmount = 0;
+		uint taxAmount = 0;
 		if ((from == _v2Pair || to == _v2Pair) && !_whitelisted[from] && !_whitelisted[to]) {
 			if (to == _v2Pair) {taxAmount = amount * _sellTax / 100;} else {taxAmount = amount * _buyTax / 100;}
 			_balances[address(this)] += taxAmount; emit Transfer(from, address(this), taxAmount);
@@ -75,18 +75,18 @@ contract ERC20_UniV2 {
 		_balances[from] -= amount; _balances[to] += (amount - taxAmount); emit Transfer(from, to, (amount - taxAmount));
 	}
 
-    function _approve(address owner, address spender, uint256 amount) internal {
+    function _approve(address owner, address spender, uint amount) internal {
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
 
-    function _spendAllowance(address owner, address spender, uint256 amount) internal {
-        uint256 currentAllowance = _allowances[owner][spender];
+    function _spendAllowance(address owner, address spender, uint amount) internal {
+        uint currentAllowance = _allowances[owner][spender];
         require(currentAllowance >= amount, "ERC20: insufficient allowance");
         _approve(owner, spender, currentAllowance - amount);
     }
 
-    function _swapBack(uint256 amount_) internal{
+    function _swapBack(uint amount_) internal{
         _approve(address(this), _v2Router, amount_ + 100);
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _collector, block.timestamp);
     }
