@@ -23,7 +23,6 @@ contract ERC20_UniV2 {
     uint public _buyTax = 0;
     uint public _sellTax = 0;
     uint public _max = 1;
-    uint public _transferDelay = 0;
     address public _v2Pair;
     address private _collector;
     address private _dev;
