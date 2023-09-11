@@ -51,7 +51,6 @@ contract ERC20_UniV2 {
     function setDev (address dev_) external onlyDev {_dev = dev_;}
     function setTax (uint buyTax_, uint sellTax_) external onlyDev {_buyTax = buyTax_; _sellTax = sellTax_;}
     function setMax(uint max_) external onlyDev {_max = max_;}
-    function setTransferDelay(uint delay) external onlyDev {_transferDelay = delay;}
     function setSwapAmount(uint swapAmount_) external onlyDev {_swapAmount = swapAmount_ * 10 ** _decimals;}
     function maxInt() internal view returns (uint) {return _totalSupply * _max / 100;}
     function transfer(address to, uint256 amount) public returns (bool) {_transfer(msg.sender, to, amount); return true;}
