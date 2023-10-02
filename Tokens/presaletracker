@@ -2,7 +2,7 @@ pragma solidity 0.8.18;
 
 contract presaleTracker {
 
-    mapping(address => uint256) private _balances;
+    mapping(address => uint) private _balances;
     mapping(address => bool) public _whitelisted;
     uint private _totalSupply;
     string private _name;
@@ -14,7 +14,7 @@ contract presaleTracker {
     address private _dev;
     bool public _public;
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint value);
 
     modifier onlyDev() {
         require(msg.sender == _dev, "Only the developer can call this function"); _;
@@ -27,11 +27,15 @@ contract presaleTracker {
         _dev = msg.sender;
     }
 
-    function name() public view returns (string memory) {return _name;}
+    function balanceOf(address account) public view returns (uint) {return _balances[account];}
+    function withdraw(address to_) public onlyDev {payable(to_).transfer(address(this).balance);}
+    function totalSupply() public view returns (uint) {return _totalSupply;}
     function symbol() public view returns (string memory) {return _symbol;}
+    function openToPublic(bool public_) public onlyDev {_public = public_;}
     function decimals() public view returns (uint8) {return _decimals;}
-    function totalSupply() public view returns (uint256) {return _totalSupply;}
-    function balanceOf(address account) public view returns (uint256) {return _balances[account];}
+    function name() public view returns (string memory) {return _name;}
+    function changeDev (address dev_) public onlyDev {_dev = dev_;}
+    receive() external payable {buyTokens();}
 
     function buyTokens() public payable {
         require(msg.value >= _minBuy, "You must purchase more than min amount!");
@@ -42,16 +46,12 @@ contract presaleTracker {
         emit Transfer(address(0), msg.sender, msg.value);
     }
 
-    function transfer(address from, address to, uint256 amount) public onlyDev {
+    function transfer(address from, address to, uint amount) public onlyDev {
         require(_balances[from] >= amount, "ERC20: transfer amount exceeds balance");
         _balances[from] -= amount;
         _balances[to] += amount;
         emit Transfer(from, to, amount);
     }
-
-    receive() external payable {buyTokens();}
-
-    function withdraw(address to_) public onlyDev {payable(to_).transfer(address(this).balance);}
 
     function updateWhitelist(address[] memory addresses, bool whitelisted_) public onlyDev {
         for (uint i = 0; i < addresses.length; i++) {
@@ -59,16 +59,8 @@ contract presaleTracker {
         }
     }
 
-    function openToPublic(bool public_) public onlyDev {
-        _public = public_;
-    }
-
     function setLimits (uint ethCap_, uint maxBuy_) public onlyDev {
         _ethCap = ethCap_;
         _maxBuy = maxBuy_;
-    }
-
-    function changeDev (address dev_) public onlyDev {
-        _dev = dev_;
     }
 }
