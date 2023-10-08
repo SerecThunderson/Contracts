@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./StakingCore.sol";
 
-contract AdminStakingContract is StakingCore {
+contract AdminStakingControls is StakingCore {
 
     address public admin;
     mapping(address => bool) public isDealer;
