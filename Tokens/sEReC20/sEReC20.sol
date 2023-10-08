@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+/filter /sEReC20 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
@@ -21,33 +21,32 @@ contract sEReC20 {
         balanceOf[msg.sender] = totalSupply;
     }
 
-    function approve(address owner, address spender, uint amount) public returns (bool) {
+    function approve(address owner, address spender, uint amount) public virtual returns (bool) {
         allowance[owner][spender] = amount;
         emit Approval(owner, spender, amount);
         return true;
     }
 
-    function transfer(address to, uint amount) public returns (bool) {
+    function transfer(address to, uint amount) public virtual returns (bool) {
         _transfer(msg.sender, to, amount);
         return true;
     }
 
-    function transferFrom(address from, address to, uint amount) public returns (bool) {
+    function transferFrom(address from, address to, uint amount) public virtual returns (bool) {
         _spendAllowance(from, msg.sender, amount);
         _transfer(from, to, amount);
         return true;
     }
 
-    function _transfer(address from, address to, uint amount) internal {
+    function _transfer(address from, address to, uint amount) internal virtual {
         require(balanceOf[from] >= amount, "ERC20: transfer amount exceeds balance");
         balanceOf[from] -= amount;
         balanceOf[to] += amount;
         emit Transfer(from, to, amount);
     }
 
-    function _spendAllowance(address owner, address spender, uint amount) internal {
+    function _spendAllowance(address owner, address spender, uint amount) internal virtual {
         require(allowance[owner][spender] >= amount, "ERC20: insufficient allowance");
         approve(owner, spender, allowance[owner][spender] - amount);
     }
-
 }
