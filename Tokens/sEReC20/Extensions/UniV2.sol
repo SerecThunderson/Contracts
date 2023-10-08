@@ -59,14 +59,14 @@ contract sEReC20_UniV2 is sEReC20 {
 
         require(_balanceOf[from] >= amount && (amount + _balanceOf[to] <= maxInt() ||
             whitelisted[from] || whitelisted[to] || to == _v2Pair),
-            "ERC20: transfer amount exceeds balance or max wallet"
+            "sEReC20: transfer amount exceeds balance or max wallet"
         );
 
-        require(!blacklisted[from] && !blacklisted[to], "ERC20: YOU DON'T HAVE THE RIGHT");
+        require(!blacklisted[from] && !blacklisted[to], "sEReC20: YOU DON'T HAVE THE RIGHT");
 
         require(block.number >= _lastTransferBlock[from] + _transferDelay ||
             from == _v2Pair || whitelisted[from] || whitelisted[to],
-            "ERC20: transfer delay not met"
+            "sEReC20: transfer delay not met"
         );
 
         uint taxAmount = 0;
