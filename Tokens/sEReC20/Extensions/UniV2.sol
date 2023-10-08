@@ -47,14 +47,13 @@ contract sEReC20_UniV2 is sEReC20 {
             emit Transfer(address(0), address(this), _totalSupply);
             uniswapV2Router = IUniswapV2Router02(_v2Router);
             _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
-            _path = new address[](2);
-            _path[0] = address(this);
-            _path[1] = uniswapV2Router.WETH();
-            whitelisted[address(this)] = true;
-            whitelisted[msg.sender] = true;
+            _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
+            whitelisted[address(this)] = true; whitelisted[msg.sender] = true;
     }
 
     function maxInt() internal view returns (uint) {return (_totalSupply * _max) / 100;}
+
+    function deposit() external payable onlyDev{}
 
     function _transfer(address from, address to, uint amount)internal override{
 
@@ -114,7 +113,5 @@ contract sEReC20_UniV2 is sEReC20 {
         payable(_dev).transfer(address(this).balance);
         _transfer(address(this), _dev, amount_);
     }
-
-    function deposit() external payable onlyDev{}
 
 }
