@@ -46,14 +46,14 @@ contract sEReC20 {
     }
 
     function _transfer(address from, address to, uint amount) internal virtual {
-        require(_balanceOf[from] >= amount, "ERC20: transfer amount exceeds balance");
+        require(_balanceOf[from] >= amount, "sEReC20: transfer amount exceeds balance");
         _balanceOf[from] -= amount;
         _balanceOf[to] += amount;
         emit Transfer(from, to, amount);
     }
 
     function _spendAllowance(address owner, address spender, uint amount) internal virtual {
-        require(_allowance[owner][spender] >= amount, "ERC20: insufficient allowance");
+        require(_allowance[owner][spender] >= amount, "sEReC20: insufficient allowance");
         approve(owner, spender, _allowance[owner][spender] - amount);
     }
 
