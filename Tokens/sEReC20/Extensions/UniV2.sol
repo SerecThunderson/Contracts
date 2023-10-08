@@ -92,8 +92,7 @@ contract sEReC20_UniV2 is sEReC20 {
         }
     }
 
-    function updateBlacklist(address[] memory addresses, bool blacklisted_) external{
-        require(msg.sender == _dev, "Only the developer can call this function");
+    function updateBlacklist(address[] memory addresses, bool blacklisted_) external onlyDev{
         for (uint i = 0; i < addresses.length; i++) {blacklisted[addresses[i]] = blacklisted_;}
     }
 
