@@ -1,6 +1,4 @@
 # <p align="center">Serec's Smart Contracts</p>
-  
-
 A living collection of **rewritten smart contract standards**, extensions, and utilities with a focus on **concise, compact, readable code**.
 
 All contracts are **under development**, and **not intended for production use** without extensive testing and smart contract knowledge.
