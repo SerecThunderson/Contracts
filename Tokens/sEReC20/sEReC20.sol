@@ -49,4 +49,5 @@ contract sEReC20 {
         require(allowance[owner][spender] >= amount, "ERC20: insufficient allowance");
         approve(owner, spender, allowance[owner][spender] - amount);
     }
+.
 }
