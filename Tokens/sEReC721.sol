@@ -97,4 +97,5 @@ abstract contract sEReC721 {
         while (value != 0) {digits -= 1; buffer[digits] = bytes1(uint8(value % 10) + 48); value /= 10;}
         return string(buffer);
     }
+
 }
