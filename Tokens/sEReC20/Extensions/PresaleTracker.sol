@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "../../sEReC20.sol";
+import "../sEReC20.sol";
 
 contract PresaleTracker is sEReC20 {
 
