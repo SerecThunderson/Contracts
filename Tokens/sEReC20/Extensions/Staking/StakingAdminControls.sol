@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "./StakingCore.sol";
+
 contract AdminStakingContract is StakingContract {
 
     address public admin;
