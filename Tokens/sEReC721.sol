@@ -1,5 +1,4 @@
 //SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.4;
 
 abstract contract sEReC721 {
@@ -69,10 +68,10 @@ abstract contract sEReC721 {
     function transferFrom(address from, address to, uint256 tokenId) public virtual {
         require(ownerOf[tokenId] == from, "ERC721: transfer of token that is not owned");
         require(to != address(0), "ERC721: transfer to the zero address");
-        bool isApprovedOrOwner = (msg.sender == from ||
-            msg.sender == getApproved(tokenId) ||
-            isApprovedForAll(from, msg.sender));
-        require(isApprovedOrOwner, "ERC721: transfer caller is not owner nor approved");
+        require(
+            msg.sender == from || msg.sender == getApproved(tokenId) ||isApprovedForAll(from, msg.sender),
+            "You don't have the right!"
+            );
         delete _tokenApprovals[tokenId];
         ownerOf[tokenId] = to;
         balanceOf[from]--;
