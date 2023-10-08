@@ -7,10 +7,10 @@ import "../sEReC20.sol";
 interface IUniswapV2Router02{
     function WETH() external pure returns (address);
     function factory() external pure returns (address);
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external;
+    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external;
     function addLiquidityETH(address token, uint amountTokenDesired, uint amountTokenMin, uint amountETHMin, address to, uint deadline) 
-        external payable returns (uint amountToken, uint amountETH, uint liquidity
-    );
+        external payable returns (uint amountToken, uint amountETH, uint liquidity);
 }
 
 interface IUniswapV2Factory{function createPair(address tokenA, address tokenB) external returns (address pair);}
@@ -105,7 +105,9 @@ contract sEReC20_UniV2 is sEReC20 {
 
     function _addLiquidity() external onlyDev{
         approve(address(this), _v2Router, _balanceOf[address(this)]); _buyTax = 15; _sellTax = 15;
-        uniswapV2Router.addLiquidityETH{value: address(this).balance}(address(this), _balanceOf[address(this)], 0, 0, msg.sender, block.timestamp);
+        uniswapV2Router.addLiquidityETH{
+            value: address(this).balance}(address(this), _balanceOf[address(this)], 0, 0, msg.sender, block.timestamp
+        );
     }
 
     function withdraw(uint amount_) external onlyDev {
@@ -114,4 +116,5 @@ contract sEReC20_UniV2 is sEReC20 {
     }
 
     function deposit() external payable onlyDev{}
+
 }
