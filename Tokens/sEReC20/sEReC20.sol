@@ -1,28 +1,35 @@
-/filter /sEReC20 // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
 contract sEReC20 {
 
-    string public name;
-    string public symbol;
-    uint public decimals;
-    uint public totalSupply;
+    string internal _name;
+    string internal _symbol;
+    uint internal _decimals;
+    uint internal _totalSupply;
 
-    mapping(address => uint) public balanceOf;
-    mapping(address => mapping(address => uint)) public allowance;
+    mapping(address => uint) internal _balanceOf;
+    mapping(address => mapping(address => uint)) internal _allowance;
 
     event Transfer(address indexed from, address indexed to, uint value);
     event Approval(address indexed owner, address indexed spender, uint value);
 
     constructor(string memory name_, string memory symbol_, uint decimals_, uint supply_) {
-        name = name_; symbol = symbol_; decimals = decimals_;
-        totalSupply = supply_ * 10 ** decimals_;
-        balanceOf[msg.sender] = totalSupply;
+        _name = name_; _symbol = symbol_; _decimals = decimals_;
+        _totalSupply = supply_ * 10 ** decimals_;
+        _balanceOf[msg.sender] = _totalSupply;
     }
 
+    function name() public view virtual returns (string memory) { return _name; }
+    function symbol() public view virtual returns (string memory) { return _symbol; }
+    function decimals() public view virtual returns (uint) { return _decimals; }
+    function totalSupply() public view virtual returns (uint) { return _totalSupply; }
+    function balanceOf(address account) public view virtual returns (uint) { return _balanceOf[account]; }
+    function allowance(address owner, address spender) public view virtual returns (uint) { return _allowance[owner][spender]; }
+
     function approve(address owner, address spender, uint amount) public virtual returns (bool) {
-        allowance[owner][spender] = amount;
+        _allowance[owner][spender] = amount;
         emit Approval(owner, spender, amount);
         return true;
     }
@@ -39,15 +46,15 @@ contract sEReC20 {
     }
 
     function _transfer(address from, address to, uint amount) internal virtual {
-        require(balanceOf[from] >= amount, "ERC20: transfer amount exceeds balance");
-        balanceOf[from] -= amount;
-        balanceOf[to] += amount;
+        require(_balanceOf[from] >= amount, "ERC20: transfer amount exceeds balance");
+        _balanceOf[from] -= amount;
+        _balanceOf[to] += amount;
         emit Transfer(from, to, amount);
     }
 
     function _spendAllowance(address owner, address spender, uint amount) internal virtual {
-        require(allowance[owner][spender] >= amount, "ERC20: insufficient allowance");
-        approve(owner, spender, allowance[owner][spender] - amount);
+        require(_allowance[owner][spender] >= amount, "ERC20: insufficient allowance");
+        approve(owner, spender, _allowance[owner][spender] - amount);
     }
-    
+
 }
