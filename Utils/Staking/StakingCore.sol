@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-contract StakingContract is sEReC20("Staked Ethereum", "sETH", 18, 0) {
+import "../../sEReC20.sol";
+
+contract StakingCore is sEReC20("Staked Ethereum", "sETH", 18, 0) {
 
     uint256 public totalStaked;
 
