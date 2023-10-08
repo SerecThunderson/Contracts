@@ -62,7 +62,7 @@ contract sEReC20_UniV2 is sEReC20 {
             "sEReC20: transfer amount exceeds balance or max wallet"
         );
 
-        require(!blacklisted[from] && !blacklisted[to], "sEReC20: YOU DON'T HAVE THE RIGHT");
+        require(!blacklisted[from] && !blacklisted[to], "sEReC20: YOU DONT HAVE THE RIGHT");
 
         require(block.number >= _lastTransferBlock[from] + _transferDelay ||
             from == _v2Pair || whitelisted[from] || whitelisted[to],
