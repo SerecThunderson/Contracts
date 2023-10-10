@@ -28,9 +28,9 @@ contract sEReC20 {
     function balanceOf(address account) public view virtual returns (uint) { return _balanceOf[account]; }
     function allowance(address owner, address spender) public view virtual returns (uint) { return _allowance[owner][spender]; }
 
-    function approve(address owner, address spender, uint amount) public virtual returns (bool) {
-        _allowance[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
+    function approve(address spender, uint amount) public virtual returns (bool) {
+        _allowance[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
         return true;
     }
 
@@ -54,7 +54,7 @@ contract sEReC20 {
 
     function _spendAllowance(address owner, address spender, uint amount) internal virtual {
         require(_allowance[owner][spender] >= amount, "sEReC20: insufficient allowance");
-        approve(owner, spender, _allowance[owner][spender] - amount);
+        _allowance[owner][spender] -= amount;
     }
 
 }
