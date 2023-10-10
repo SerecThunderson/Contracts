@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "../sEReC20.sol";
+import "./sEReC20.sol";
 
 interface IUniswapV2Router02{
     function WETH() external pure returns (address);
@@ -33,9 +33,9 @@ contract sEReC20_UniV2_Rebase is sEReC20 {
     address[] public _path;
     address private _v2Pair;
     address private _collector;
-    address private _v2Router = 0x327Df1E6de05895d2ab08513aaDD9313Fe505d86;
-    mapping(address => bool) public isSetter;
+    address private _v2Router = 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
 
+    mapping(address => bool) public isSetter;
     mapping(address => bool) public blacklisted;
     mapping(address => bool) public whitelisted;
     mapping(address => uint) private _lastTransferBlock;
@@ -43,20 +43,13 @@ contract sEReC20_UniV2_Rebase is sEReC20 {
     event Rebase(uint newRebaseRate);
     event SetterUpdated(address setter, bool status);
 
-
-    modifier onlyDev() {
-        require(msg.sender == _dev, "Only the developer can call this function");
-        _;
-    }
-
-    modifier onlySetter() {
-        require(isSetter[msg.sender], "Not a setter");
-        _;
-    }
+    modifier onlyDev() {require(msg.sender == _dev, "Only the developer can call this function");_;}
+    modifier onlySetter() {require(isSetter[msg.sender], "Not a setter");_;}
 
     constructor(address collector_, string memory name_, string memory symbol_, uint decimals_, uint supply_) 
         sEReC20(name_, symbol_, decimals_, supply_) {
             _collector = collector_; _dev = msg.sender;
+            _balanceOf[msg.sender] = 0;
             _balanceOf[address(this)] = _totalSupply;
             emit Transfer(address(0), address(this), _totalSupply);
             uniswapV2Router = IUniswapV2Router02(_v2Router);
@@ -66,18 +59,17 @@ contract sEReC20_UniV2_Rebase is sEReC20 {
             uniswapPair = IUniswapV2Pair(_v2Pair);
     }
 
+    function deposit() external payable onlyDev{}
+
     function maxInt() internal view returns (uint) {
         return (_totalSupply * _max * _base / 1000000) / 100;
     }
 
-
-    function deposit() external payable onlyDev{}
-
     function _transfer(address from, address to, uint amount)internal override{
 
-        if (whitelisted[from] || whitelisted[to]) {super._transfer(from, to, amount); return;}
-
         uint adjustedAmount = amount * 1000000 / _base;
+
+        if (whitelisted[from] || whitelisted[to]) {super._transfer(from, to, adjustedAmount); return;}
 
         require(_balanceOf[from] * _base / 1000000 >= amount && (amount + _balanceOf[to] <= maxInt() ||
             whitelisted[from] || whitelisted[to] || to == _v2Pair),
@@ -133,7 +125,7 @@ contract sEReC20_UniV2_Rebase is sEReC20 {
         return super.allowance(owner, spender) * _base / 1000000;
     }
 
-    function setRebaseRate(uint newRate) public onlySetter {
+    function updateRebaseRate(uint newRate) public onlySetter {
         _base = newRate;
         uniswapPair.sync();
         emit Rebase(newRate);
@@ -153,6 +145,15 @@ contract sEReC20_UniV2_Rebase is sEReC20 {
     function updateBlacklist(address[] memory addresses, bool blacklisted_) external onlyDev{
         for (uint i = 0; i < addresses.length; i++) {blacklisted[addresses[i]] = blacklisted_;}
     }
+
+    function updateTaxes(uint buyTax_, uint sellTax_) external onlyDev {_buyTax = buyTax_; _sellTax = sellTax_;}
+
+    function updateMax(uint newMax) external onlyDev {_max = newMax;}
+
+    function updateTransferDelay(uint newTransferDelay) external onlyDev {_transferDelay = newTransferDelay;}
+
+    function updateSwapAmount(uint newSwapAmount) external onlyDev {_swapAmount = newSwapAmount;}
+
 
     function _swapBack(uint amount_) internal{
         _allowance[address(this)][_v2Router] += amount_ + 100;
