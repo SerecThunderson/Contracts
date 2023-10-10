@@ -62,6 +62,10 @@ contract Rebasable is sEReC20 {
         return super.balanceOf(account) * rebaseRate / 1000;
     }
 
+    function totalSupply() public view override returns (uint) {
+        return super.totalSupply() * rebaseRate / 1000;
+    }
+
     function _transfer(address from, address to, uint amount) internal override {
         uint adjustedAmount = amount * 1000 / rebaseRate;
         super._transfer(from, to, adjustedAmount);
