@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./sEReC20.sol";
+import "../sEReC20.sol";
 
 interface IUniswapV2Router02{
     function WETH() external pure returns (address);
