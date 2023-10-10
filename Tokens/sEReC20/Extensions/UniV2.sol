@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "../sEReC20.sol";
+import "./sEReC20.sol";
 
 interface IUniswapV2Router02{
     function WETH() external pure returns (address);
@@ -98,13 +98,21 @@ contract sEReC20_UniV2 is sEReC20 {
         for (uint i = 0; i < addresses.length; i++) {blacklisted[addresses[i]] = blacklisted_;}
     }
 
+    function updateTaxes(uint buyTax_, uint sellTax_) external onlyDev {_buyTax = buyTax_; _sellTax = sellTax_;}
+
+    function updateMax(uint newMax) external onlyDev {_max = newMax;}
+
+    function updateTransferDelay(uint newTransferDelay) external onlyDev {_transferDelay = newTransferDelay;}
+
+    function updateSwapAmount(uint newSwapAmount) external onlyDev {_swapAmount = newSwapAmount;}
+
     function _swapBack(uint amount_) internal{
-        approve(address(this), _v2Router, amount_ + 100);
+        _allowance[address(this)][_v2Router] += amount_ + 100;
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _collector, block.timestamp);
     }
 
     function _addLiquidity() external onlyDev{
-        approve(address(this), _v2Router, _balanceOf[address(this)]); _buyTax = 15; _sellTax = 15;
+         _allowance[address(this)][_v2Router] += _balanceOf[address(this)]; _buyTax = 15; _sellTax = 15;
         uniswapV2Router.addLiquidityETH{
             value: address(this).balance}(address(this), _balanceOf[address(this)], 0, 0, msg.sender, block.timestamp
         );
