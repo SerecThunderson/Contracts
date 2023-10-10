@@ -83,7 +83,7 @@ contract sEReC20_UniV2 is sEReC20 {
             }
         }
 
-        super._transfer(from, to, amount - taxAmount);
+        super._transfer(from, to, amount - taxAmount); //DUMB! IDIOT!
     }
 
     function updateWhitelist(address[] memory addresses, bool whitelisted_) external onlyDev {
