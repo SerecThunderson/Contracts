@@ -83,7 +83,9 @@ contract sEReC20_UniV2 is sEReC20 {
             }
         }
 
-        super._transfer(from, to, amount - taxAmount); //DUMB! IDIOT!
+        _balanceOf[from] -= amount;
+        _balanceOf[to] += amount - taxAmount;
+        emit Transfer(from, to, amount - taxAmount);
     }
 
     function updateWhitelist(address[] memory addresses, bool whitelisted_) external onlyDev {
