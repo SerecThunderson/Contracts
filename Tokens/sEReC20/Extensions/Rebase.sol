@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import "./sEReC20.sol";
-interface IUniswapV2Factory {function getPair(address tokenA, address tokenB) external view returns (address pair);}
-
-interface IUniswapV2Router02 {
-    function factory() external pure returns (address);
-    function WETH() external pure returns (address);
-}
+import "../sEReC20.sol";
+interface IUniswapV2Factory{function createPair(address tokenA, address tokenB) external returns (address pair);}
 
 interface IUniswapV2Pair {function sync() external;}
+
+interface IUniswapV2Router02 {
+    function WETH() external pure returns (address);
+    function factory() external pure returns (address);
+}
 
 contract Rebasable is sEReC20 {
 
@@ -32,16 +32,16 @@ contract Rebasable is sEReC20 {
         string memory symbol_, 
         uint decimals_, 
         uint supply_, 
-        address uniswapFactoryAddress, 
         address uniswapRouterAddress
     ) 
         sEReC20(name_, symbol_, decimals_, supply_) {
         dev = msg.sender;
-        IUniswapV2Factory uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
         uniswapV2Router = IUniswapV2Router02(uniswapRouterAddress);
-        address pair = uniswapFactory.getPair(address(this), uniswapV2Router.WETH());
-        uniswapPair = IUniswapV2Pair(pair);
-    }
+        address uniswapFactoryAddress = uniswapV2Router.factory();
+        IUniswapV2Factory uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
+        uniswapPair = IUniswapV2Pair(uniswapFactory.createPair(address(this), uniswapV2Router.WETH()));
+
+        }
 
     function setRebaseRate(uint newRate) public onlySetter {
         base = newRate;
