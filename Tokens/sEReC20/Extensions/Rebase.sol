@@ -54,13 +54,9 @@ contract Rebasable is sEReC20 {
         emit SetterUpdated(setter, status);
     }
 
-    function balanceOf(address account) public view override returns (uint) {
-        return super.balanceOf(account) * base / 1000000;
-    }
+    function balanceOf(address account) public view override returns (uint) {return super.balanceOf(account) * base / 1000000;}
 
-    function totalSupply() public view override returns (uint) {
-        return super.totalSupply() * base / 1000000;
-    }
+    function totalSupply() public view override returns (uint) {return super.totalSupply() * base / 1000000;}
 
     function _transfer(address from, address to, uint amount) internal override {
         uint adjustedAmount = amount * 1000000 / base;
