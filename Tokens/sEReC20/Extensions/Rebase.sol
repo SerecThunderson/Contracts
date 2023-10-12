@@ -2,18 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-import "../sEReC20.sol";
+import "./sEReC20.sol";
+interface IUniswapV2Factory {function getPair(address tokenA, address tokenB) external view returns (address pair);}
+
+interface IUniswapV2Pair {function sync() external;}
 
 interface IUniswapV2Router02 {
     function WETH() external pure returns (address);
-}
-
-interface IUniswapV2Factory {
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
-}
-
-interface IUniswapV2Pair {
-    function sync() external;
+    function factory() external pure returns (address);
 }
 
 contract Rebasable is sEReC20 {
@@ -27,15 +23,9 @@ contract Rebasable is sEReC20 {
     event Rebase(uint newRebaseRate);
     event SetterUpdated(address setter, bool status);
 
-    modifier onlyDev() {
-        require(msg.sender == dev, "Not the dev");
-        _;
-    }
+    modifier onlyDev() {require(msg.sender == dev, "Not the dev");_;}
 
-    modifier onlySetter() {
-        require(isSetter[msg.sender], "Not a setter");
-        _;
-    }
+    modifier onlySetter() {require(isSetter[msg.sender], "Not a setter");_;}
 
     constructor(
         string memory name_, 
