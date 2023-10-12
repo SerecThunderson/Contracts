@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "../sEReC20.sol";
+import "./sEReC20.sol";
+
 interface IUniswapV2Factory{function createPair(address tokenA, address tokenB) external returns (address pair);}
 
 interface IUniswapV2Pair {function sync() external;}
@@ -40,7 +41,6 @@ contract Rebasable is sEReC20 {
         address uniswapFactoryAddress = uniswapV2Router.factory();
         IUniswapV2Factory uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
         uniswapPair = IUniswapV2Pair(uniswapFactory.createPair(address(this), uniswapV2Router.WETH()));
-
         }
 
     function setRebaseRate(uint newRate) public onlySetter {
