@@ -16,7 +16,7 @@ contract Rebasable is sEReC20 {
 
     address public dev;
     mapping(address => bool) public isSetter;
-    uint public rebaseRate = 1000; // initial rebase rate
+    uint public base = 1000000; // initial rebase rate
     IUniswapV2Pair public uniswapPair;
 
     event Rebase(uint newRebaseRate);
@@ -48,7 +48,7 @@ contract Rebasable is sEReC20 {
     }
 
     function setRebaseRate(uint newRate) public onlySetter {
-        rebaseRate = newRate;
+        base = newRate;
         uniswapPair.sync();
         emit Rebase(newRate);
     }
@@ -59,15 +59,15 @@ contract Rebasable is sEReC20 {
     }
 
     function balanceOf(address account) public view override returns (uint) {
-        return super.balanceOf(account) * rebaseRate / 1000;
+        return super.balanceOf(account) * base / 1000000;
     }
 
     function totalSupply() public view override returns (uint) {
-        return super.totalSupply() * rebaseRate / 1000;
+        return super.totalSupply() * base / 1000000;
     }
 
     function _transfer(address from, address to, uint amount) internal override {
-        uint adjustedAmount = amount * 1000 / rebaseRate;
+        uint adjustedAmount = amount * 1000000 / base;
         super._transfer(from, to, adjustedAmount);
     }
 }
