@@ -67,7 +67,7 @@ abstract contract sEReC721 {
         require(
             msg.sender == from || msg.sender == getApproved(tokenId) ||isApprovedForAll(from, msg.sender),
             "You don't have the right!"
-            );
+        );
         delete _tokenApprovals[tokenId];
         ownerOf[tokenId] = to;
         balanceOf[from]--;
