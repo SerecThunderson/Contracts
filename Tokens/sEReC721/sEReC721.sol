@@ -1,5 +1,3 @@
-//SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.4;
 
 abstract contract sEReC721 {
@@ -10,7 +8,6 @@ abstract contract sEReC721 {
 
     string public name;
     string public symbol;
-    address public dev;
     uint256 public totalSupply;
     string public baseURI;
 
@@ -29,7 +26,6 @@ abstract contract sEReC721 {
         return
             interfaceId == 0x01ffc9a7 ||
             interfaceId == 0x80ac58cd ||
-            interfaceId == 0x780e9d63 ||
             interfaceId == 0x5b5e139f;
     }
 
@@ -68,7 +64,6 @@ abstract contract sEReC721 {
 
     function transferFrom(address from, address to, uint256 tokenId) public virtual {
         require(ownerOf[tokenId] == from, "ERC721: transfer of token that is not owned");
-        require(to != address(0), "ERC721: transfer to the zero address");
         require(
             msg.sender == from || msg.sender == getApproved(tokenId) ||isApprovedForAll(from, msg.sender),
             "You don't have the right!"
@@ -97,5 +92,4 @@ abstract contract sEReC721 {
         while (value != 0) {digits -= 1; buffer[digits] = bytes1(uint8(value % 10) + 48); value /= 10;}
         return string(buffer);
     }
-
 }
