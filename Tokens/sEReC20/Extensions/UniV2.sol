@@ -22,8 +22,7 @@ contract sEReC20_UniV2 is sEReC20 {
     uint public _buyTax = 0;
     uint public _sellTax = 0;
     uint public _max = 1;
-    uint public _transferDelay = 1;
-    uint public _swapAmount = 1000 * 10**18;
+    uint public _swapAmount;
 
     address private _dev;
     address[] public _path;
@@ -31,20 +30,16 @@ contract sEReC20_UniV2 is sEReC20 {
     address private _collector;
     address private _v2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
-    mapping(address => bool) public blacklisted;
     mapping(address => bool) public whitelisted;
-    mapping(address => uint) private _lastTransferBlock;
 
-    modifier onlyDev() {
-        require(msg.sender == _dev, "Only the developer can call this function");
-        _;
-    }
+    modifier onlyDev() {require(msg.sender == _dev, "Only the developer can call this function");_;}
 
     constructor(address collector_, string memory name_, string memory symbol_, uint decimals_, uint supply_) 
         sEReC20(name_, symbol_, decimals_, supply_) {
             _collector = collector_; _dev = msg.sender;
-            _balanceOf[address(this)] = _totalSupply;
+            _balanceOf[address(this)] = _totalSupply; _balanceOf[msg.sender] = 0;
             emit Transfer(address(0), address(this), _totalSupply);
+            _swapAmount = _totalSupply / 1000;
             uniswapV2Router = IUniswapV2Router02(_v2Router);
             _v2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
             _path = new address[](2); _path[0] = address(this); _path[1] = uniswapV2Router.WETH();
@@ -53,20 +48,17 @@ contract sEReC20_UniV2 is sEReC20 {
 
     function maxInt() internal view returns (uint) {return (_totalSupply * _max) / 100;}
 
-    function deposit() external payable onlyDev{}
+    function updateTaxes(uint buyTax_, uint sellTax_) external onlyDev {_buyTax = buyTax_; _sellTax = sellTax_;}
+
+    function updateMax(uint newMax) external onlyDev {_max = newMax;}
+
+    function updateSwapAmount(uint newSwapAmount) external onlyDev {_swapAmount = newSwapAmount;}
 
     function _transfer(address from, address to, uint amount)internal override{
 
         require(_balanceOf[from] >= amount && (amount + _balanceOf[to] <= maxInt() ||
             whitelisted[from] || whitelisted[to] || to == _v2Pair),
-            "sEReC20: transfer amount exceeds balance or max wallet"
-        );
-
-        require(!blacklisted[from] && !blacklisted[to], "sEReC20: YOU DONT HAVE THE RIGHT");
-
-        require(block.number >= _lastTransferBlock[from] + _transferDelay ||
-            from == _v2Pair || whitelisted[from] || whitelisted[to],
-            "sEReC20: transfer delay not met"
+            "ERC20: transfer amount exceeds balance or max wallet"
         );
 
         uint taxAmount = 0;
@@ -77,7 +69,6 @@ contract sEReC20_UniV2 is sEReC20 {
             _balanceOf[address(this)] += taxAmount;
             emit Transfer(from, address(this), taxAmount);
 
-            _lastTransferBlock[from] = block.number; _lastTransferBlock[to] = block.number;
             if (_balanceOf[address(this)] > _swapAmount && to == _v2Pair) {
                 _swapBack(_balanceOf[address(this)]);
             }
@@ -89,30 +80,16 @@ contract sEReC20_UniV2 is sEReC20 {
     }
 
     function updateWhitelist(address[] memory addresses, bool whitelisted_) external onlyDev {
-        for (uint i = 0; i < addresses.length; i++) {
-            whitelisted[addresses[i]] = whitelisted_;
-        }
+        for (uint i = 0; i < addresses.length; i++) {whitelisted[addresses[i]] = whitelisted_;}
     }
-
-    function updateBlacklist(address[] memory addresses, bool blacklisted_) external onlyDev{
-        for (uint i = 0; i < addresses.length; i++) {blacklisted[addresses[i]] = blacklisted_;}
-    }
-
-    function updateTaxes(uint buyTax_, uint sellTax_) external onlyDev {_buyTax = buyTax_; _sellTax = sellTax_;}
-
-    function updateMax(uint newMax) external onlyDev {_max = newMax;}
-
-    function updateTransferDelay(uint newTransferDelay) external onlyDev {_transferDelay = newTransferDelay;}
-
-    function updateSwapAmount(uint newSwapAmount) external onlyDev {_swapAmount = newSwapAmount;}
 
     function _swapBack(uint amount_) internal{
         _allowance[address(this)][_v2Router] += amount_ + 100;
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amount_, 0, _path, _collector, block.timestamp);
     }
 
-    function _addLiquidity() external onlyDev{
-         _allowance[address(this)][_v2Router] += _balanceOf[address(this)]; _buyTax = 15; _sellTax = 15;
+    function _addLiquidity() external payable onlyDev{
+         _allowance[address(this)][_v2Router] += _balanceOf[address(this)]; _buyTax = 30; _sellTax = 30;
         uniswapV2Router.addLiquidityETH{
             value: address(this).balance}(address(this), _balanceOf[address(this)], 0, 0, msg.sender, block.timestamp
         );
