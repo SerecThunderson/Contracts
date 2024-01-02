@@ -65,7 +65,7 @@ abstract contract sEReC721 {
     function transferFrom(address from, address to, uint256 tokenId) public virtual {
         require(ownerOf[tokenId] == from, "ERC721: transfer of token that is not owned");
         require( msg.sender == from || msg.sender == getApproved(tokenId) ||isApprovedForAll(from, msg.sender),
-            "You don't have the right!"
+            "You don't have the right"
         );
         delete _tokenApprovals[tokenId];
         ownerOf[tokenId] = to;
